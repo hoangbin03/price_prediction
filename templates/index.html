@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán giá</title>
+</head>
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7fc;
+    color: #333;
+    height: 100vh; 
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px;
+}
+
+/* Title */
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+/* Form container */
+.form-container {
+    width: 100%;
+    max-width: 600px; 
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form styling */
+label {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    display: inline-block;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border 0.3s ease;
+}
+
+input[type="text"]:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+p {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    label, input, button {
+        font-size: 1rem;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    textarea {
+        width: 100%;
+    }
+}
+</style>
+<body>
+    <div class="form-container">
+        <h1>Dự đoán giá cám gạo BDH</h1>
+
+        <!--chọn vùng-->
+        <label for="location">Chọn Vị trí:</label>
+        <select id="location" name="location">
+            <option value="BDH">BDH</option>
+            <option value="HNI">HNI</option>
+            <option value="HDG">HDG</option>
+        </select><br><br>
+
+        <!-- Nhập giá trị -->
+        <label for="exportVolume">Export Volume:</label>
+        <input type="text" id="exportVolume" name="exportVolume" placeholder="Nhập giá trị export volume"><br><br>
+
+        <label for="importVolume">Import Volume:</label>
+        <input type="text" id="importVolume" name="importVolume" placeholder="Nhập giá trị import volume"><br><br>
+
+        <!-- Checkbox -->
+        <p>Chọn mùa vụ:</p>
+        <label for="season-1">vào mùa miền bắc</label>
+        <input type="checkbox" id="season-1" name="season" value="north"><br>
+
+        <label for="season-2">vào mùa miền trung</label>
+        <input type="checkbox" id="season-2" name="season" value="central"><br>
+
+        <label for="season-3">vào mùa miền nam</label>
+        <input type="checkbox" id="season-3" name="season" value="south"><br><br>
+
+        <!-- Button -->
+        <button id="predictButton" onclick="predictPrice()">Dự đoán</button>
+        
+        <!-- Kết quả -->
+        <p><strong>Kết quả:</strong></p>
+        <textarea id="result" rows="3" cols="30" readonly></textarea>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        function predictPrice() {
+            // Lấy dữ liệu từ các input
+            const exportVolume = document.getElementById("exportVolume").value;
+            const importVolume = document.getElementById("importVolume").value;
+            const seasons = [];
+            document.querySelectorAll('input[name="season"]:checked').forEach((checkbox) => {
+                seasons.push(checkbox.value);
+            });
+            const location = document.getElementById("location").value;
+            // Kiểm tra nếu giá trị đầu vào bị thiếu
+            if (!exportVolume || !importVolume  === 0) {
+                document.getElementById("result").value = "Vui lòng nhập đủ thông tin.";
+                return;
+            }
+
+            // Gửi dữ liệu đến server Flask và nhận kết quả
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    exportVolume: parseFloat(exportVolume),
+                    importVolume: parseFloat(importVolume),
+                    seasons: seasons,
+                    location: location
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hiển thị kết quả
+                document.getElementById("result").value = `Giá dự đoán: ${data.predictedPrice.toFixed(2)}`;
+            })
+            .catch(error => {
+                console.error('Lỗi:', error);
+                document.getElementById("result").value = "Có lỗi xảy ra.";
+            });
+        }
+    </script>
+</body>
+</html>
